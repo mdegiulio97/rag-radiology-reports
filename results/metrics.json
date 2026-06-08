@@ -1,0 +1,176 @@
+{
+  "corpus": {
+    "n_documents": 15,
+    "synthetic": true,
+    "note": "Referti generati artificialmente (NON dati reali di pazienti)."
+  },
+  "retrieval": {
+    "backend": "tfidf",
+    "n_curated_queries": 12,
+    "hit_rate_at_k": {
+      "1": 1.0,
+      "3": 1.0,
+      "5": 1.0
+    },
+    "per_query": [
+      {
+        "question": "Ci sono segni di polmonite al lobo inferiore destro?",
+        "expected": "RX-CHEST-001",
+        "retrieved": [
+          "RX-CHEST-001",
+          "RX-CHEST-002",
+          "RX-CHEST-005",
+          "CT-CHEST-008",
+          "RX-CHEST-006"
+        ],
+        "rank": 1
+      },
+      {
+        "question": "Versamento pleurico sinistro di che entità?",
+        "expected": "RX-CHEST-002",
+        "retrieved": [
+          "RX-CHEST-002",
+          "RX-CHEST-003",
+          "CT-CHEST-007",
+          "RX-CHEST-001",
+          "RX-CHEST-005"
+        ],
+        "rank": 1
+      },
+      {
+        "question": "L'esame del torace è nei limiti della norma?",
+        "expected": "RX-CHEST-003",
+        "retrieved": [
+          "RX-CHEST-003",
+          "RX-CHEST-001",
+          "RX-CHEST-006",
+          "US-ABD-012",
+          "RX-CHEST-004"
+        ],
+        "rank": 1
+      },
+      {
+        "question": "Ci sono segni di scompenso cardiaco ed edema polmonare?",
+        "expected": "RX-CHEST-004",
+        "retrieved": [
+          "RX-CHEST-004",
+          "CT-CHEST-007",
+          "RX-CHEST-006",
+          "MR-BRAIN-011",
+          "RX-CHEST-001"
+        ],
+        "rank": 1
+      },
+      {
+        "question": "È presente uno pneumotorace?",
+        "expected": "RX-CHEST-005",
+        "retrieved": [
+          "RX-CHEST-005",
+          "RX-CHEST-001",
+          "RX-CHEST-003",
+          "RX-CHEST-002",
+          "RX-CHEST-004"
+        ],
+        "rank": 1
+      },
+      {
+        "question": "È stato descritto un nodulo polmonare solitario?",
+        "expected": "RX-CHEST-006",
+        "retrieved": [
+          "RX-CHEST-006",
+          "CT-CHEST-007",
+          "CT-CHEST-009",
+          "RX-CHEST-004",
+          "RX-CHEST-003"
+        ],
+        "rank": 1
+      },
+      {
+        "question": "Ci sono reperti di embolia polmonare alla TC?",
+        "expected": "CT-CHEST-007",
+        "retrieved": [
+          "CT-CHEST-007",
+          "RX-CHEST-006",
+          "CT-CHEST-009",
+          "RX-CHEST-004",
+          "RX-CHEST-003"
+        ],
+        "rank": 1
+      },
+      {
+        "question": "Si vede enfisema polmonare e BPCO?",
+        "expected": "CT-CHEST-009",
+        "retrieved": [
+          "CT-CHEST-009",
+          "CT-CHEST-007",
+          "RX-CHEST-006",
+          "RX-CHEST-004",
+          "RX-CHEST-003"
+        ],
+        "rank": 1
+      },
+      {
+        "question": "La RM encefalo mostra un ictus ischemico acuto?",
+        "expected": "MR-BRAIN-010",
+        "retrieved": [
+          "MR-BRAIN-010",
+          "RX-CHEST-001",
+          "RX-CHEST-003",
+          "RX-CHEST-002",
+          "RX-CHEST-005"
+        ],
+        "rank": 1
+      },
+      {
+        "question": "Ci sono calcoli nella colecisti?",
+        "expected": "US-ABD-012",
+        "retrieved": [
+          "US-ABD-012",
+          "RX-CHEST-001",
+          "RX-CHEST-003",
+          "RX-CHEST-002",
+          "RX-CHEST-005"
+        ],
+        "rank": 1
+      },
+      {
+        "question": "È descritta una frattura del radio distale?",
+        "expected": "RX-BONE-014",
+        "retrieved": [
+          "RX-BONE-014",
+          "RX-CHEST-001",
+          "RX-CHEST-003",
+          "RX-CHEST-002",
+          "RX-CHEST-005"
+        ],
+        "rank": 1
+      },
+      {
+        "question": "È presente un'ernia discale lombare L5-S1?",
+        "expected": "MR-SPINE-015",
+        "retrieved": [
+          "MR-SPINE-015",
+          "RX-CHEST-001",
+          "RX-CHEST-003",
+          "RX-CHEST-002",
+          "RX-CHEST-005"
+        ],
+        "rank": 1
+      }
+    ]
+  },
+  "anti_hallucination": {
+    "n_out_of_corpus_queries": 5,
+    "retrieval_on": {
+      "min_score": 0.05,
+      "correct_abstentions": 5,
+      "abstention_rate": 1.0
+    },
+    "retrieval_off_ablation": {
+      "min_score": 0.0,
+      "correct_abstentions": 0,
+      "abstention_rate": 0.0,
+      "note": "Gate anti-allucinazione disattivato (min_score=0): astensione attesa ~0."
+    }
+  }
+}
