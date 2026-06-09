@@ -32,6 +32,9 @@ packages = ["src/rag_reports"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+# I notebook usano uno stile a celle (statement compatti con ';' per le figure):
+# esclusi dal lint per non snaturarli.
+extend-exclude = ["notebooks"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
