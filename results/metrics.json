@@ -2,7 +2,7 @@
   "corpus": {
     "n_documents": 15,
     "synthetic": true,
-    "note": "Referti generati artificialmente (NON dati reali di pazienti)."
+    "note": "Invented reports (NOT real patient data)."
   },
   "retrieval": {
     "backend": "tfidf",
@@ -170,7 +170,7 @@
       "min_score": 0.0,
       "correct_abstentions": 0,
       "abstention_rate": 0.0,
-      "note": "Gate anti-allucinazione disattivato (min_score=0): astensione attesa ~0."
+      "note": "Abstention gate disabled (min_score=0): expected abstention ~0."
     }
   }
 }

@@ -1,10 +1,10 @@
-"""Retrieval dei chunk.
+"""Chunk retrieval.
 
-Default: **TF-IDF** (scikit-learn) con similarità coseno — 100% offline.
-Opzionale (extra ``dense``): embedding densi con ``sentence-transformers``, dietro
-flag, NON usato nei test e NON richiesto dalle dipendenze di base.
+Default: **TF-IDF** (scikit-learn) with cosine similarity — fully offline.
+Optional (``dense`` extra): dense embeddings with ``sentence-transformers``, behind a
+flag, NOT used in the tests and NOT required by the base dependencies.
 
-Tutti i retriever espongono la stessa interfaccia :class:`BaseRetriever` con
+All retrievers expose the same :class:`BaseRetriever` interface with
 ``search(query, k) -> list[RetrievalResult]``.
 """
 
@@ -19,9 +19,10 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from .chunking import Chunk, chunk_documents
 
-# Stop-word italiane comuni: scikit-learn non ne fornisce per l'italiano. Rimuoverle
-# evita che parole funzione (articoli, preposizioni, interrogativi) gonfino la
-# similarità di query fuori-corpus, ampliando il margine per l'anti-allucinazione.
+# Common Italian stop words (the corpus is in Italian): scikit-learn ships no Italian
+# list. Removing them keeps function words (articles, prepositions, interrogatives) from
+# inflating the similarity of out-of-corpus queries, which widens the margin for the
+# abstention threshold.
 ITALIAN_STOPWORDS: list[str] = [
     "a", "ad", "al", "alla", "alle", "agli", "ai", "allo", "anche", "c", "che", "chi",
     "ci", "co", "col", "come", "con", "cosa", "da", "dal", "dalla", "dei", "del",
@@ -37,18 +38,18 @@ ITALIAN_STOPWORDS: list[str] = [
 
 @dataclass(frozen=True)
 class RetrievalResult:
-    """Risultato di una ricerca: un chunk con il suo punteggio di similarità."""
+    """Search result: a chunk with its similarity score."""
 
     chunk: Chunk
     score: float
 
 
 class BaseRetriever(ABC):
-    """Interfaccia comune ai retriever (TF-IDF e, opzionale, embedding densi)."""
+    """Common interface for retrievers (TF-IDF and, optionally, dense embeddings)."""
 
     def __init__(self, chunks: list[Chunk]):
         if not chunks:
-            raise ValueError("Il retriever richiede almeno un chunk.")
+            raise ValueError("The retriever needs at least one chunk.")
         self.chunks = chunks
 
     @classmethod
@@ -60,16 +61,17 @@ class BaseRetriever(ABC):
 
     @abstractmethod
     def search(self, query: str, k: int = 3) -> list[RetrievalResult]:
-        """Restituisce i ``k`` chunk più rilevanti, ordinati per score decrescente."""
+        """Return the ``k`` most relevant chunks, sorted by decreasing score."""
 
 
 class TfidfRetriever(BaseRetriever):
-    """Retriever TF-IDF + similarità coseno. Backend di default, offline."""
+    """TF-IDF retriever + cosine similarity. Default backend, offline."""
 
     def __init__(self, chunks: list[Chunk]):
         super().__init__(chunks)
-        # Unigrammi + bigrammi; lowercase; niente stop-list italiana built-in in
-        # scikit-learn, ma TF-IDF già pesa al ribasso i termini molto frequenti.
+        # Unigrams + bigrams; lowercase; scikit-learn has no built-in Italian stop
+        # list (hence ITALIAN_STOPWORDS), and TF-IDF already down-weights very
+        # frequent terms.
         self._vectorizer = TfidfVectorizer(
             lowercase=True,
             ngram_range=(1, 2),
@@ -84,7 +86,7 @@ class TfidfRetriever(BaseRetriever):
         q_vec = self._vectorizer.transform([query])
         sims = cosine_similarity(q_vec, self._matrix).ravel()
         k = max(1, min(k, len(self.chunks)))
-        # ordinamento parziale per efficienza, poi ordinamento fine
+        # sort by decreasing similarity and keep the top k
         top_idx = np.argsort(-sims)[:k]
         return [
             RetrievalResult(chunk=self.chunks[i], score=float(sims[i]))
@@ -93,20 +95,20 @@ class TfidfRetriever(BaseRetriever):
 
 
 class DenseRetriever(BaseRetriever):
-    """Retriever con embedding densi (sentence-transformers). OPZIONALE.
+    """Retriever with dense embeddings (sentence-transformers). OPTIONAL.
 
-    Richiede l'extra ``dense``: ``uv sync --extra dense``. Non usato nei test e non
-    nel percorso di default. Import pigro per non imporre la dipendenza.
+    Requires the ``dense`` extra: ``uv sync --extra dense``. Not used in the tests and
+    not on the default path. Lazy import so the dependency is not required.
     """
 
     def __init__(self, chunks: list[Chunk], model_name: str = "all-MiniLM-L6-v2"):
         super().__init__(chunks)
         try:
             from sentence_transformers import SentenceTransformer
-        except ImportError as exc:  # pragma: no cover - dipende da extra opzionale
+        except ImportError as exc:  # pragma: no cover - depends on an optional extra
             raise ImportError(
-                "DenseRetriever richiede 'sentence-transformers'. "
-                "Installa con: uv sync --extra dense"
+                "DenseRetriever requires 'sentence-transformers'. "
+                "Install it with: uv sync --extra dense"
             ) from exc
         self._model = SentenceTransformer(model_name)
         self._emb = self._model.encode(
@@ -129,7 +131,7 @@ class DenseRetriever(BaseRetriever):
 def build_retriever(
     docs: list[dict], dense: bool = False, **kwargs
 ) -> BaseRetriever:
-    """Factory: TF-IDF (default) oppure densi se ``dense=True`` ed extra installato."""
+    """Factory: TF-IDF (default), or dense if ``dense=True`` and the extra is installed."""
     if dense:
         return DenseRetriever.from_documents(docs, **kwargs)
     return TfidfRetriever.from_documents(docs, **kwargs)

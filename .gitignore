@@ -1,4 +1,4 @@
-# Corpora esterni (es. Open-i): non versionati. Il corpus SINTETICO sta in corpus/.
+# External corpora (e.g. Open-i): not versioned. The SYNTHETIC corpus lives in corpus/.
 data/
 !data/.gitkeep
 

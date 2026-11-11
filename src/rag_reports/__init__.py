@@ -1,4 +1,4 @@
-"""rag_reports — RAG locale su referti radiologici sintetici con citazioni e anti-allucinazione."""
+"""rag_reports — local RAG over synthetic radiology reports, with citations and abstention."""
 
 from __future__ import annotations
 

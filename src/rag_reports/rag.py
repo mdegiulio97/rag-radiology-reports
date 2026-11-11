@@ -1,8 +1,8 @@
-"""Orchestrazione RAG: retrieve → (anti-allucinazione) → genera con citazioni.
+"""RAG orchestration: retrieve → (hallucination check) → generate with citations.
 
-La soglia di anti-allucinazione si applica al **miglior** punteggio di retrieval:
-se il top score è sotto ``min_score`` il sistema si astiene e restituisce la frase
-standard "L'informazione non è presente nei documenti", senza inventare contenuti.
+The abstention threshold is applied to the **best** retrieval score: if the top score
+is below ``min_score`` the system abstains and returns the standard message
+(``ABSTAIN_MESSAGE``) instead of producing content.
 """
 
 from __future__ import annotations
@@ -12,13 +12,13 @@ from dataclasses import dataclass, field
 from .generator import ABSTAIN_MESSAGE, make_generator
 from .retriever import BaseRetriever, RetrievalResult, build_retriever
 
-# Soglia di default sul top score TF-IDF (similarità coseno in [0, 1]).
+# Default threshold on the top TF-IDF score (cosine similarity in [0, 1]).
 DEFAULT_MIN_SCORE = 0.05
 
 
 @dataclass
 class RagAnswer:
-    """Esito di una query RAG."""
+    """Result of a RAG query."""
 
     question: str
     text: str
@@ -28,7 +28,7 @@ class RagAnswer:
 
     @property
     def source_ids(self) -> list[str]:
-        """Id dei documenti citati, deduplicati in ordine di rilevanza."""
+        """Ids of the cited documents, de-duplicated, in order of relevance."""
         seen: list[str] = []
         for r in self.sources:
             if r.chunk.doc_id not in seen:
@@ -37,7 +37,7 @@ class RagAnswer:
 
 
 class RagPipeline:
-    """Pipeline RAG completa: retriever + generatore + logica anti-allucinazione."""
+    """Full RAG pipeline: retriever + generator + abstention logic."""
 
     def __init__(
         self,
@@ -76,7 +76,7 @@ class RagPipeline:
         return self.retriever.search(question, k=k or self.top_k)
 
     def answer(self, question: str, k: int | None = None) -> RagAnswer:
-        """Risponde alla domanda con citazioni, oppure si astiene se l'evidenza è scarsa."""
+        """Answer the question with citations, or abstain if the evidence is weak."""
         backend_name = getattr(self.generator, "name", "extractive")
         results = self.retrieve(question, k=k)
         top_score = results[0].score if results else 0.0

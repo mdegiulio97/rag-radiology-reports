@@ -1,13 +1,13 @@
-"""Prepara e valida il corpus SINTETICO versionato (idempotente).
+"""Prepare and validate the versioned SYNTHETIC corpus (idempotent).
 
-Questo script NON scarica nulla dalla rete: il corpus sintetico è la fonte di verità
-in-code (``src/rag_reports/sample_corpus.py``). Lo script lo serializza in
-``corpus/sample_reports.jsonl`` e ne verifica l'integrità. Eseguirlo più volte
-produce lo stesso risultato.
+This script does NOT download anything: the synthetic corpus is the in-code source of
+truth (``src/rag_reports/sample_corpus.py``). The script serializes it to
+``corpus/sample_reports.jsonl`` and checks its integrity. Running it several times
+gives the same result.
 
-Per usare un corpus REALE e pubblico (es. Open-i / Indiana University Chest X-ray,
-https://openi.nlm.nih.gov/) convertilo in JSONL e mettilo in ``data/`` (gitignorata),
-poi caricalo con ``rag_reports.corpus.load_jsonl_corpus``.
+To use a REAL, public corpus (e.g. Open-i / Indiana University Chest X-ray,
+https://openi.nlm.nih.gov/), convert it to JSONL, put it in ``data/`` (gitignored),
+then load it with ``rag_reports.corpus.load_jsonl_corpus``.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# Permette l'esecuzione diretta (python scripts/download_data.py) senza install.
+# Allows direct execution (python scripts/download_data.py) without installing.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from rag_reports.corpus import (  # noqa: E402
@@ -31,22 +31,22 @@ def main() -> int:
     n_synth = sum(1 for d in docs if d.get("synthetic") is True)
 
     if n_synth != len(docs):
-        print("ERRORE: non tutti i referti sono marcati come sintetici.")
+        print("ERROR: not all reports are marked as synthetic.")
         return 1
 
     path = write_sample_jsonl()
-    # Re-load dal file per validare la serializzazione (round-trip).
+    # Reload from the file to validate the serialization (round trip).
     reloaded = load_jsonl_corpus(path)
 
     if len(reloaded) != len(docs):
-        print("ERRORE: il numero di documenti dopo il round-trip non coincide.")
+        print("ERROR: the number of documents after the round trip does not match.")
         return 1
 
-    print("Corpus SINTETICO validato (referti generati artificialmente, NON reali).")
-    print(f"  Documenti: {len(docs)} (tutti synthetic=True)")
-    print(f"  File JSONL: {SAMPLE_JSONL_PATH}")
-    print("  Round-trip JSONL: OK")
-    print("\nPer un corpus reale e pubblico: Open-i (https://openi.nlm.nih.gov/) -> JSONL in data/.")
+    print("SYNTHETIC corpus validated (invented reports, NOT real patient data).")
+    print(f"  Documents: {len(docs)} (all synthetic=True)")
+    print(f"  JSONL file: {SAMPLE_JSONL_PATH}")
+    print("  JSONL round trip: OK")
+    print("\nFor a real, public corpus: Open-i (https://openi.nlm.nih.gov/) -> JSONL in data/.")
     return 0
 
 

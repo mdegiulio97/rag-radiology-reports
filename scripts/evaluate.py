@@ -1,12 +1,12 @@
-"""Calcola le metriche di retrieval e anti-allucinazione → results/.
+"""Compute the retrieval and abstention metrics → results/.
 
-Produce:
-- ``results/metrics.json``: hit-rate@k del retrieval sulle query curate, esito del
-  test anti-allucinazione, e un confronto "retrieval on vs off" (con vs senza
-  retrieval) sull'astensione.
-- ``results/hit_rate.png``: figura a barre dell'hit-rate@k.
+Produces:
+- ``results/metrics.json``: retrieval hit-rate@k on the curated queries, result of the
+  abstention test, and an "abstention threshold on vs off" comparison (with vs without
+  the threshold) on abstention.
+- ``results/hit_rate.png``: bar chart of hit-rate@k.
 
-Tutto offline e deterministico (backend di generazione: estrattivo).
+Everything is offline and deterministic (generation backend: extractive).
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-# Esecuzione diretta senza install.
+# Direct execution without installing.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from rag_reports.corpus import load_sample_corpus  # noqa: E402
@@ -43,7 +43,7 @@ def _plot_hit_rate(hit_rate: dict[int, float], out_path: Path) -> None:
     ax.set_ylim(0, 1.05)
     ax.set_ylabel("Hit-rate")
     ax.set_xlabel("Top-k")
-    ax.set_title("Retrieval TF-IDF — Hit-rate@k (corpus sintetico)")
+    ax.set_title("TF-IDF retrieval — Hit-rate@k (synthetic corpus)")
     for bar, v in zip(bars, vals):
         ax.text(bar.get_x() + bar.get_width() / 2, v + 0.02, f"{v:.2f}", ha="center")
     fig.tight_layout()
@@ -59,14 +59,14 @@ def main() -> int:
     retriever = build_retriever(docs, dense=False)
     retr = evaluate_retrieval(retriever, k_values=(1, 3, 5))
 
-    # --- Anti-allucinazione: retrieval ON vs OFF ------------------------------
-    # ON: pipeline normale con retrieval → deve astenersi sulle query fuori-corpus.
+    # --- Abstention: threshold ON vs OFF --------------------------------------
+    # ON: normal pipeline with the threshold → must abstain on out-of-corpus queries.
     pipe_on = RagPipeline.from_documents(docs, backend="extractive")
     abst_on = evaluate_abstention(pipe_on)
 
-    # OFF (ablazione): soglia anti-allucinazione disattivata (min_score=0). Senza il
-    # gate, il sistema risponderebbe SEMPRE → astensione attesa ~0 → mostra l'utilità
-    # del controllo anti-allucinazione.
+    # OFF (ablation): abstention threshold disabled (min_score=0). Without the gate
+    # the system would ALWAYS answer → expected abstention ~0 → shows what the
+    # abstention check contributes.
     pipe_off = RagPipeline.from_documents(docs, backend="extractive", min_score=0.0)
     abst_off = evaluate_abstention(pipe_off)
 
@@ -74,7 +74,7 @@ def main() -> int:
         "corpus": {
             "n_documents": len(docs),
             "synthetic": True,
-            "note": "Referti generati artificialmente (NON dati reali di pazienti).",
+            "note": "Invented reports (NOT real patient data).",
         },
         "retrieval": {
             "backend": "tfidf",
@@ -93,7 +93,7 @@ def main() -> int:
                 "min_score": pipe_off.min_score,
                 "correct_abstentions": abst_off.n_correct_abstentions,
                 "abstention_rate": round(abst_off.abstention_rate, 4),
-                "note": "Gate anti-allucinazione disattivato (min_score=0): astensione attesa ~0.",
+                "note": "Abstention gate disabled (min_score=0): expected abstention ~0.",
             },
         },
     }
@@ -104,22 +104,22 @@ def main() -> int:
     fig_path = RESULTS_DIR / "hit_rate.png"
     _plot_hit_rate(retr.hit_rate_at_k, fig_path)
 
-    # --- Riepilogo a console --------------------------------------------------
-    print("=== Valutazione RAG (corpus sintetico) ===")
-    print(f"Documenti: {len(docs)} | Query curate: {retr.n_queries} (= {len(CURATED_QUERIES)})")
+    # --- Console summary ------------------------------------------------------
+    print("=== RAG evaluation (synthetic corpus) ===")
+    print(f"Documents: {len(docs)} | Curated queries: {retr.n_queries} (= {len(CURATED_QUERIES)})")
     for k in sorted(retr.hit_rate_at_k):
         print(f"  Hit-rate@{k}: {retr.hit_rate_at_k[k]:.3f}")
     print(
-        f"Anti-allucinazione (retrieval ON): "
-        f"{abst_on.n_correct_abstentions}/{abst_on.n_queries} astensioni corrette "
+        f"Abstention (threshold ON): "
+        f"{abst_on.n_correct_abstentions}/{abst_on.n_queries} correct abstentions "
         f"({abst_on.abstention_rate:.3f})"
     )
     print(
-        f"Ablazione (gate OFF): "
-        f"{abst_off.n_correct_abstentions}/{abst_off.n_queries} astensioni "
+        f"Ablation (gate OFF): "
+        f"{abst_off.n_correct_abstentions}/{abst_off.n_queries} abstentions "
         f"({abst_off.abstention_rate:.3f})"
     )
-    print(f"\nScritti: {metrics_path}")
+    print(f"\nWritten: {metrics_path}")
     print(f"         {fig_path}")
     return 0
 

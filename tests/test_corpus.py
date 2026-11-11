@@ -1,4 +1,4 @@
-"""Test del corpus sintetico (offline): integrità e marcatura 'synthetic'."""
+"""Synthetic corpus tests (offline): integrity and the 'synthetic' tag."""
 
 from __future__ import annotations
 
@@ -25,6 +25,6 @@ def test_write_and_reload_jsonl(tmp_path):
     write_sample_jsonl(out)
     reloaded = load_jsonl_corpus(out)
     assert len(reloaded) == len(load_sample_corpus())
-    # ogni riga è JSON valido
+    # every line is valid JSON
     for line in out.read_text(encoding="utf-8").splitlines():
         json.loads(line)

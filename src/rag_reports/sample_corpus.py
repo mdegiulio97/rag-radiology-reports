@@ -1,26 +1,29 @@
-"""Corpus SINTETICO di referti radiologici (fonte di verità versionata).
+"""SYNTHETIC corpus of radiology reports (versioned source of truth).
 
-⚠️ ATTENZIONE: questi referti sono **generati artificialmente** a scopo dimostrativo.
-NON sono dati reali di pazienti, non provengono da cartelle cliniche e non vanno usati
-per scopi clinici. Ogni record è marcato con ``"synthetic": True``.
+WARNING: these reports were written for demonstration purposes. They are NOT real
+patient data, do not come from medical records and must not be used for clinical
+purposes. Every record is tagged with ``"synthetic": True``.
 
-La pipeline può anche caricare un corpus reale e pubblico (es. Open-i / Indiana
-University Chest X-ray reports, https://openi.nlm.nih.gov/) tramite
+The reports are in Italian. They are kept in Italian because the retrieval setup
+(Italian stop words) and the evaluation queries are built around them.
+
+The pipeline can also load a real, public corpus (e.g. Open-i / Indiana University
+Chest X-ray reports, https://openi.nlm.nih.gov/) through
 :func:`rag_reports.corpus.load_jsonl_corpus`.
 
-Ogni referto ha la struttura:
+Each report has the structure:
     {
-        "id": str,            # identificatore univoco (usato nelle citazioni [doc:ID])
-        "modality": str,      # modalità di imaging
-        "exam": str,          # tipo di esame
-        "text": str,          # corpo del referto (Reperti + Conclusioni)
-        "synthetic": True,    # SEMPRE True per questo corpus
+        "id": str,            # unique identifier (used in the [doc:ID] citations)
+        "modality": str,      # imaging modality
+        "exam": str,          # type of exam
+        "text": str,          # report body ("Reperti" = findings + "Conclusioni" = conclusions)
+        "synthetic": True,    # ALWAYS True for this corpus
     }
 """
 
 from __future__ import annotations
 
-# Referti sintetici. Linguaggio realistico ma interamente inventato.
+# Synthetic reports. Realistic wording, entirely invented content.
 SAMPLE_REPORTS: list[dict] = [
     {
         "id": "RX-CHEST-001",
@@ -206,5 +209,5 @@ SAMPLE_REPORTS: list[dict] = [
 
 
 def get_sample_reports() -> list[dict]:
-    """Restituisce una copia profonda del corpus sintetico in-code."""
+    """Return a copy of the in-code synthetic corpus (one new dict per report)."""
     return [dict(r) for r in SAMPLE_REPORTS]
