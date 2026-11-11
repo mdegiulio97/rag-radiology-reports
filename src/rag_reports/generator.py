@@ -98,6 +98,7 @@ class OllamaGenerator:
         return (
             "You answer ONLY on the basis of the documents provided.\n"
             "Cite the sources in square brackets using the format [doc:ID].\n"
+            "Answer in the same language as the question.\n"
             "If the information is not present in the documents, answer exactly: "
             f"\"{ABSTAIN_MESSAGE}\".\n\n"
             f"DOCUMENTS:\n{context}\n\n"
