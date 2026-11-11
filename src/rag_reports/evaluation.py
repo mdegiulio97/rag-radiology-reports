@@ -1,14 +1,15 @@
-"""Valutazione del sistema RAG.
+"""Evaluation of the RAG system.
 
-Due famiglie di metriche, entrambe offline:
+Two families of metrics, both offline:
 
-1. **Hit-rate del retrieval @k**: su un set di query curate (domanda → documento
-   atteso), frazione di query per cui il documento atteso compare tra i primi ``k``
-   risultati.
-2. **Anti-allucinazione**: su query fuori-corpus, frazione di query per cui la
-   pipeline si astiene correttamente ("non presente nei documenti").
+1. **Retrieval hit-rate @k**: on a set of curated queries (question → expected
+   document), the fraction of queries for which the expected document appears among
+   the first ``k`` results.
+2. **Abstention (hallucination check)**: on out-of-corpus queries, the fraction of
+   queries for which the pipeline correctly abstains ("not present in the documents").
 
-Le query curate di default si riferiscono al corpus SINTETICO versionato.
+The default curated queries refer to the versioned SYNTHETIC corpus. Like the corpus,
+they are in Italian.
 """
 
 from __future__ import annotations
@@ -18,7 +19,8 @@ from dataclasses import dataclass
 from .rag import RagPipeline
 from .retriever import BaseRetriever
 
-# Query curate: (domanda, id del documento atteso). Riferite al corpus sintetico.
+# Curated queries: (question, id of the expected document). They refer to the synthetic
+# corpus and are in Italian, like the corpus.
 CURATED_QUERIES: list[tuple[str, str]] = [
     ("Ci sono segni di polmonite al lobo inferiore destro?", "RX-CHEST-001"),
     ("Versamento pleurico sinistro di che entità?", "RX-CHEST-002"),
@@ -34,7 +36,8 @@ CURATED_QUERIES: list[tuple[str, str]] = [
     ("È presente un'ernia discale lombare L5-S1?", "MR-SPINE-015"),
 ]
 
-# Query fuori-corpus: la pipeline deve astenersi (anti-allucinazione).
+# Out-of-corpus queries (general-knowledge questions, in Italian): the pipeline must
+# abstain on all of them.
 OUT_OF_CORPUS_QUERIES: list[str] = [
     "Qual è la capitale della Francia?",
     "Qual è la ricetta della carbonara?",
@@ -46,7 +49,7 @@ OUT_OF_CORPUS_QUERIES: list[str] = [
 
 @dataclass
 class RetrievalEval:
-    """Esito della valutazione del retrieval."""
+    """Result of the retrieval evaluation."""
 
     k_values: list[int]
     hit_rate_at_k: dict[int, float]
@@ -56,7 +59,7 @@ class RetrievalEval:
 
 @dataclass
 class AbstentionEval:
-    """Esito del test anti-allucinazione."""
+    """Result of the abstention test."""
 
     n_queries: int
     n_correct_abstentions: int
@@ -77,7 +80,7 @@ def evaluate_retrieval(
     queries: list[tuple[str, str]] | None = None,
     k_values: tuple[int, ...] = (1, 3, 5),
 ) -> RetrievalEval:
-    """Calcola hit-rate@k del retrieval sulle query curate."""
+    """Compute the retrieval hit-rate@k on the curated queries."""
     queries = queries if queries is not None else CURATED_QUERIES
     max_k = max(k_values)
     hits = {k: 0 for k in k_values}
@@ -112,7 +115,7 @@ def evaluate_retrieval(
 def evaluate_abstention(
     pipeline: RagPipeline, queries: list[str] | None = None
 ) -> AbstentionEval:
-    """Verifica che la pipeline si astenga sulle query fuori-corpus."""
+    """Check that the pipeline abstains on the out-of-corpus queries."""
     queries = queries if queries is not None else OUT_OF_CORPUS_QUERIES
     per_query: list[dict] = []
     correct = 0

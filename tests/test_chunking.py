@@ -1,4 +1,4 @@
-"""Test del chunking (offline)."""
+"""Chunking tests (offline)."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ def test_chunk_text_respects_max_chars():
     text = " ".join([f"Frase numero {i}." for i in range(40)])
     chunks = chunk_text(text, max_chars=80, overlap_chars=10)
     assert len(chunks) > 1
-    # ogni chunk non eccede troppo il limite (una frase può sforare da sola)
+    # no chunk goes far over the limit (a single sentence may exceed it on its own)
     assert all(len(c) <= 80 + 20 for c in chunks)
 
 

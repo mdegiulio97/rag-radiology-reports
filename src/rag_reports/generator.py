@@ -1,16 +1,17 @@
-"""Generazione della risposta a partire dai chunk recuperati.
+"""Answer generation from the retrieved chunks.
 
-Due backend:
+Two backends:
 
-- **Ollama** (``OllamaGenerator``): usa un LLM locale via ``http://localhost:11434``
-  se il servizio risponde. Il rilevamento è *robusto*: l'assenza del servizio NON
-  solleva eccezioni (try/except su requests, timeout breve).
-- **Estrattivo** (``ExtractiveGenerator``): fallback **deterministico** che NON usa
-  rete né LLM. Compone la risposta concatenando i passaggi-fonte recuperati e
-  aggiunge le citazioni ``[doc:ID]``. È il backend usato dai test.
+- **Ollama** (``OllamaGenerator``): uses a local LLM via ``http://localhost:11434``
+  if the service responds. Detection is *robust*: a missing service does NOT raise
+  exceptions (try/except around requests, short timeout).
+- **Extractive** (``ExtractiveGenerator``): **deterministic** fallback that uses
+  neither the network nor an LLM. It builds the answer by concatenating the retrieved
+  source passages and adds the ``[doc:ID]`` citations. This is the backend used by the
+  tests.
 
-Entrambi rispettano il contratto: dato un prompt e i chunk-fonte, restituiscono una
-stringa di risposta che cita le fonti.
+Both follow the same contract: given a question and the source chunks, they return an
+answer string that cites its sources.
 """
 
 from __future__ import annotations
@@ -21,14 +22,14 @@ import requests
 
 from .retriever import RetrievalResult
 
-# Frase standard di astensione (anti-allucinazione).
-ABSTAIN_MESSAGE = "L'informazione non è presente nei documenti."
+# Standard abstention message (hallucination check).
+ABSTAIN_MESSAGE = "The information is not present in the documents."
 
 DEFAULT_OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
 
 def detect_ollama(host: str = DEFAULT_OLLAMA_HOST, timeout: float = 0.5) -> bool:
-    """True se un servizio Ollama risponde su ``host``. Mai solleva eccezioni."""
+    """True if an Ollama service responds at ``host``. Never raises."""
     url = host.rstrip("/") + "/api/tags"
     try:
         resp = requests.get(url, timeout=timeout)
@@ -38,7 +39,7 @@ def detect_ollama(host: str = DEFAULT_OLLAMA_HOST, timeout: float = 0.5) -> bool
 
 
 def _format_citations(results: list[RetrievalResult]) -> str:
-    """Elenco ordinato e deduplicato delle fonti citate, come ``[doc:ID]``."""
+    """Ordered, de-duplicated list of the cited sources, as ``[doc:ID]``."""
     seen: list[str] = []
     for r in results:
         if r.chunk.doc_id not in seen:
@@ -47,10 +48,10 @@ def _format_citations(results: list[RetrievalResult]) -> str:
 
 
 class ExtractiveGenerator:
-    """Fallback estrattivo deterministico (nessuna rete, nessun LLM).
+    """Deterministic extractive fallback (no network, no LLM).
 
-    Compone la risposta dai passaggi recuperati e cita ``[doc:ID]``. Deterministico:
-    stesso input → stesso output. È il backend di default quando Ollama è assente.
+    Builds the answer from the retrieved passages and cites ``[doc:ID]``. Deterministic:
+    same input → same output. This is the default backend when Ollama is not available.
     """
 
     name = "extractive"
@@ -59,21 +60,21 @@ class ExtractiveGenerator:
         if not results:
             return ABSTAIN_MESSAGE
         lines = [
-            "In base ai documenti recuperati, i passaggi pertinenti sono:",
+            "Based on the retrieved documents, the relevant passages are:",
             "",
         ]
         for r in results:
             lines.append(f"- {r.chunk.text} [doc:{r.chunk.doc_id}]")
         lines.append("")
-        lines.append(f"Fonti: {_format_citations(results)}")
+        lines.append(f"Sources: {_format_citations(results)}")
         return "\n".join(lines)
 
 
 class OllamaGenerator:
-    """Backend Ollama. Costruisce un prompt grounded e chiama l'API locale.
+    """Ollama backend. Builds a grounded prompt and calls the local API.
 
-    In caso di errore di rete o servizio assente, ricade sul generatore estrattivo,
-    così la pipeline non fallisce mai.
+    On a network error or when the service is missing, it falls back to the extractive
+    generator, so the pipeline never fails.
     """
 
     name = "ollama"
@@ -95,12 +96,12 @@ class OllamaGenerator:
             context_blocks.append(f"[doc:{r.chunk.doc_id}] {r.chunk.text}")
         context = "\n".join(context_blocks)
         return (
-            "Sei un assistente che risponde SOLO in base ai documenti forniti.\n"
-            "Cita le fonti tra parentesi quadre nel formato [doc:ID].\n"
-            "Se l'informazione non è presente nei documenti, rispondi esattamente: "
+            "You answer ONLY on the basis of the documents provided.\n"
+            "Cite the sources in square brackets using the format [doc:ID].\n"
+            "If the information is not present in the documents, answer exactly: "
             f"\"{ABSTAIN_MESSAGE}\".\n\n"
-            f"DOCUMENTI:\n{context}\n\n"
-            f"DOMANDA: {question}\n\nRISPOSTA:"
+            f"DOCUMENTS:\n{context}\n\n"
+            f"QUESTION: {question}\n\nANSWER:"
         )
 
     def generate(self, question: str, results: list[RetrievalResult]) -> str:
@@ -120,16 +121,16 @@ class OllamaGenerator:
                 return self._fallback.generate(question, results)
             return text
         except (requests.exceptions.RequestException, ValueError, OSError):
-            # servizio assente / errore di rete / JSON invalido → fallback robusto
+            # service missing / network error / invalid JSON → robust fallback
             return self._fallback.generate(question, results)
 
 
 def make_generator(backend: str = "auto", model: str = "llama3.2", host: str = DEFAULT_OLLAMA_HOST):
-    """Crea il generatore.
+    """Create the generator.
 
-    - ``"extractive"`` → sempre fallback estrattivo (default sicuro/offline).
-    - ``"ollama"``     → backend Ollama (con auto-fallback interno se irraggiungibile).
-    - ``"auto"``       → Ollama se rilevato, altrimenti estrattivo.
+    - ``"extractive"`` → always the extractive fallback (safe/offline default).
+    - ``"ollama"``     → Ollama backend (with internal fallback if unreachable).
+    - ``"auto"``       → Ollama if detected, otherwise extractive.
     """
     backend = backend.lower()
     if backend == "extractive":
@@ -140,4 +141,4 @@ def make_generator(backend: str = "auto", model: str = "llama3.2", host: str = D
         if detect_ollama(host=host):
             return OllamaGenerator(model=model, host=host)
         return ExtractiveGenerator()
-    raise ValueError(f"Backend sconosciuto: {backend!r}")
+    raise ValueError(f"Unknown backend: {backend!r}")

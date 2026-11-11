@@ -1,4 +1,4 @@
-"""Test del retriever TF-IDF (offline): la query seminata recupera il doc giusto."""
+"""TF-IDF retriever tests (offline): the seeded query retrieves the right document."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ def test_tfidf_retrieves_expected_doc_top1():
     results = retr.search("segni di polmonite al lobo inferiore destro", k=3)
     assert results
     assert isinstance(results[0], RetrievalResult)
-    # il documento di polmonite deve essere il primo
+    # the pneumonia report must come first
     assert results[0].chunk.doc_id == "RX-CHEST-001"
 
 

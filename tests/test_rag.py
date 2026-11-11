@@ -1,4 +1,4 @@
-"""Test della pipeline RAG end-to-end (offline, backend estrattivo)."""
+"""End-to-end RAG pipeline tests (offline, extractive backend)."""
 
 from __future__ import annotations
 

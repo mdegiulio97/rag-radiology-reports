@@ -1,4 +1,4 @@
-"""Test delle metriche di valutazione (offline)."""
+"""Evaluation metric tests (offline)."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ def test_retrieval_hit_rate_high():
     retr = build_retriever(docs, dense=False)
     res = evaluate_retrieval(retr, k_values=(1, 3, 5))
     assert res.n_queries == len(CURATED_QUERIES)
-    # ci aspettiamo un retrieval forte sul corpus sintetico
+    # retrieval is expected to be strong on the small synthetic corpus
     assert res.hit_rate_at_k[3] >= 0.8
     assert res.hit_rate_at_k[1] <= res.hit_rate_at_k[3] <= res.hit_rate_at_k[5] or True
 
@@ -26,5 +26,5 @@ def test_abstention_all_out_of_corpus():
     docs = load_sample_corpus()
     pipe = RagPipeline.from_documents(docs, backend="extractive")
     res = evaluate_abstention(pipe)
-    # tutte le query fuori-corpus devono portare ad astensione
+    # every out-of-corpus query must lead to abstention
     assert res.abstention_rate == 1.0

@@ -1,7 +1,7 @@
 [project]
 name = "rag-radiology-reports"
 version = "0.1.0"
-description = "RAG locale su referti radiologici sintetici con citazioni alle fonti e anti-allucinazione (TF-IDF + Ollama/fallback estrattivo)"
+description = "Local RAG over synthetic radiology reports with source citations and abstention on unsupported questions (TF-IDF + Ollama / extractive fallback)"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
@@ -32,8 +32,8 @@ packages = ["src/rag_reports"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-# I notebook usano uno stile a celle (statement compatti con ';' per le figure):
-# esclusi dal lint per non snaturarli.
+# Notebooks use a cell style (compact statements with ';' for figures):
+# excluded from linting to keep that style.
 extend-exclude = ["notebooks"]
 
 [tool.pytest.ini_options]
