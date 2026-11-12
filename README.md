@@ -1,5 +1,7 @@
 # rag-radiology-reports
 
+[![CI](https://github.com/mdegiulio97/rag-radiology-reports/actions/workflows/ci.yml/badge.svg)](https://github.com/mdegiulio97/rag-radiology-reports/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A **local RAG (Retrieval-Augmented Generation)** system over radiology reports / clinical
 text, with **source citations** and an **abstention check against hallucination**. It is
 designed to run **fully offline**: retrieval uses TF-IDF (scikit-learn) by default, and
